@@ -29,6 +29,17 @@ int main(int argc, const char * argv[]) {
         cache[i] = new unsigned long long[assoc];
     }
     
+    unsigned long long r_miss, w_miss, n_read, n_write;
+    r_miss = w_miss = n_read = n_write = 0;
+    
+    // Miss calculations
+    double miss_rate, r_miss_rate, w_miss_rate;
+    miss_rate = (double) (r_miss + w_miss) / (n_read + n_write); // total miss rate
+    r_miss_rate = (double) r_miss / n_read; // read miss rate
+    w_miss_rate = (double) w_miss / n_read; // write miss rate
+    
+    std::cout << r_miss + w_miss << " " << miss_rate << " " << r_miss << " " << r_miss_rate << " " << w_miss << " " << w_miss_rate << std::endl;
+    
 //    char type;
 //    unsigned long long address;
 //    std::cin >> type >> address;

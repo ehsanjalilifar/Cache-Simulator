@@ -8,9 +8,62 @@
 #include <stdio.h>
 #include <iostream>
 #include <fstream>
-#include <string>
+#include <math.h>
 // #include <fstream>
 #define KB 1024
+
+class Cache {
+    private:
+        int capacity;
+        int assoc;
+        int blocksize;
+        char policy;
+        int n_sets;
+        int n_offset_bits;
+        int n_index_bits;
+        unsigned long long** cacheMem; // Stores addresses in the cache as a 2D array
+        bool** validBitMap; // A 2D bitmap for the Valid bit
+        
+        unsigned long long getTag(unsigned long long address) {
+            // Shift the address to get the tag bits
+            return (address >> (n_offset_bits + n_index_bits));
+        }   
+
+        unsigned long long getIndex(unsigned long long address) {
+            // Remove the Offset 
+            unsigned long long tmp = address >> n_offset_bits;
+            // Remove the index bits (address space is 64 bits)
+            tmp = tmp << (64 - n_index_bits);
+            // remove the right zeros and return
+            tmp = tmp >> (n_offset_bits + n_index_bits);
+            return (tmp);
+        } 
+
+    public:
+        Cache(int nk, int assoc, int blocksize, char repl) {
+            this->capacity = nk;
+            this->assoc = assoc;
+            this->blocksize = blocksize;
+            this->policy = repl;
+            this->n_sets = this->capacity * KB / this->assoc / this->blocksize;
+            this->n_offset_bits = (int) std::log2(this->blocksize);
+            this->n_index_bits = (int) std::log2(this->assoc);
+
+            // Define a 2-D array to store the addresses in the cach
+            this->cacheMem = new unsigned long long*[this->n_sets];
+            this->validBitMap = new bool*[this->n_sets]; // defines the valid bit
+            for (int i = 0; i < this->n_sets; i++) {
+                this->cacheMem[i] = new unsigned long long[this->assoc];
+                this->validBitMap[i] = new bool[this->assoc];
+            }
+
+        }
+
+        bool checkMiss(unsigned long long address) {
+
+            return true;
+        }
+};
 
 int main(int argc, const char * argv[]) {
     
@@ -19,25 +72,12 @@ int main(int argc, const char * argv[]) {
     int blocksize = std::atoi(argv[3]); // The size of a single cache block in bytes
     char repl = *argv[4]; // The replacement policy; 'l' means LRU, 'r' means random.
 
-    int n_sets = nk * KB / assoc / blocksize;
+    Cache cacheSim = Cache(nk, assoc, blocksize, repl);
     
-    std::cout << "number of sets = " << n_sets << std::endl;
-    
-
-    // Define a 2-D array to store the addresses in the cach
-    unsigned long long** cache = new unsigned long long*[n_sets];
-    bool** valid = new bool*[n_sets]; // defines the valid bit
-    for (int i = 0; i < n_sets; i++) {
-        cache[i] = new unsigned long long[assoc];
-        valid[i] = new bool[assoc];
-    }
-
     char operation;
     unsigned long long address;
-    std::string myText;
 
     std::ifstream infile("input.txt");
-    std::cout << infile.is_open() << std::endl;
     while(!infile.eof()) {
         infile >> operation >> std::hex >> address;
         std::cout << operation << " " << address << std::endl;

@@ -23,8 +23,10 @@ class Cache {
         int n_index_bits;
         long long** cacheMem; // Stores addresses in the cache as a 2D array
         bool** validBitMap; // A 2D bitmap for the Valid bit
-        int r_miss;
-        int w_miss;
+        long long r_miss;
+        long long w_miss;
+        long long r_count;
+        long long w_count;
         
         long long getTag(long long address) {
             // Shift the address to get the tag bits
@@ -33,6 +35,15 @@ class Cache {
 
         long long getIndex(long long address) {
             return (address / blocksize) % n_sets;
+        }
+
+        bool isHit(long long address) {
+            long long set_idx = getIndex(address);
+            long long tag = getTag(address);
+            for(int i = 0; i < assoc; i++) {
+                if(validBitMap[set_idx][i] && tag == cacheMem[set_idx][i]) return true;
+            }
+            return false;
         }
 
     public:
@@ -57,14 +68,14 @@ class Cache {
 
         }
 
-        bool isHit(long long address) {
-            long long set_idx = getIndex(address);
-            long long tag = getTag(address);
-            for(int i = 0; i < assoc; i++) {
-                if(validBitMap[set_idx][i] && tag == cacheMem[set_idx][i]) return true;
+        void insert(long long address, char type) {
+            if(!isHit(address)) { // update the cache on a miss
+                type == 'r' ? r_miss++ : w_miss++;
             }
-            return false;
+            type == 'r' ? r_count++ : w_count++;
         }
+
+        
 };
 
 int main(int argc, const char * argv[]) {

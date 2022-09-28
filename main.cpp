@@ -21,23 +21,19 @@ class Cache {
         int n_sets;
         int n_offset_bits;
         int n_index_bits;
-        unsigned long long** cacheMem; // Stores addresses in the cache as a 2D array
+        long long** cacheMem; // Stores addresses in the cache as a 2D array
         bool** validBitMap; // A 2D bitmap for the Valid bit
+        int r_miss;
+        int w_miss;
         
-        unsigned long long getTag(unsigned long long address) {
+        long long getTag(long long address) {
             // Shift the address to get the tag bits
             return (address >> (n_offset_bits + n_index_bits));
-        }   
+        }    
 
-        unsigned long long getIndex(unsigned long long address) {
-            // Remove the Offset 
-            unsigned long long tmp = address >> n_offset_bits;
-            // Remove the index bits (address space is 64 bits)
-            tmp = tmp << (64 - n_index_bits);
-            // remove the right zeros and return
-            tmp = tmp >> (n_offset_bits + n_index_bits);
-            return (tmp);
-        } 
+        long long getIndex(long long address) {
+            return (address / blocksize) % n_sets;
+        }
 
     public:
         Cache(int nk, int assoc, int blocksize, char repl) {
@@ -48,20 +44,26 @@ class Cache {
             this->n_sets = this->capacity * KB / this->assoc / this->blocksize;
             this->n_offset_bits = (int) std::log2(this->blocksize);
             this->n_index_bits = (int) std::log2(this->assoc);
+            this->r_miss = 0;
+            this->w_miss = 0;
 
             // Define a 2-D array to store the addresses in the cach
-            this->cacheMem = new unsigned long long*[this->n_sets];
+            this->cacheMem = new  long long*[this->n_sets];
             this->validBitMap = new bool*[this->n_sets]; // defines the valid bit
             for (int i = 0; i < this->n_sets; i++) {
-                this->cacheMem[i] = new unsigned long long[this->assoc];
+                this->cacheMem[i] = new  long long[this->assoc];
                 this->validBitMap[i] = new bool[this->assoc];
             }
 
         }
 
-        bool checkMiss(unsigned long long address) {
-
-            return true;
+        bool isHit(long long address) {
+            long long set_idx = getIndex(address);
+            long long tag = getTag(address);
+            for(int i = 0; i < assoc; i++) {
+                if(validBitMap[set_idx][i] && tag == cacheMem[set_idx][i]) return true;
+            }
+            return false;
         }
 };
 
@@ -75,7 +77,7 @@ int main(int argc, const char * argv[]) {
     Cache cacheSim = Cache(nk, assoc, blocksize, repl);
     
     char operation;
-    unsigned long long address;
+    long long address;
 
     std::ifstream infile("input.txt");
     while(!infile.eof()) {
@@ -85,7 +87,7 @@ int main(int argc, const char * argv[]) {
     infile.close();
     
     // Cache miss rate calculations
-    unsigned long long r_miss, w_miss, n_read, n_write;
+    long long r_miss, w_miss, n_read, n_write;
     r_miss = w_miss = n_read = n_write = 0;
 
     double miss_rate, r_miss_rate, w_miss_rate;

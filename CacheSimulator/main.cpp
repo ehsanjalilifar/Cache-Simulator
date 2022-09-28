@@ -5,8 +5,11 @@
 //  Created by Ehsan Jalilifar on 9/27/22.
 //
 
+#include <stdio.h>
 #include <iostream>
 #include <fstream>
+#include <string>
+// #include <fstream>
 #define KB 1024
 
 int main(int argc, const char * argv[]) {
@@ -21,7 +24,7 @@ int main(int argc, const char * argv[]) {
     std::cout << "number of sets = " << n_sets << std::endl;
     
 
-//     Define a 2-D array to store the addresses in the cach
+    // Define a 2-D array to store the addresses in the cach
     unsigned long long** cache = new unsigned long long*[n_sets];
     bool** valid = new bool*[n_sets]; // defines the valid bit
     for (int i = 0; i < n_sets; i++) {
@@ -30,21 +33,18 @@ int main(int argc, const char * argv[]) {
     }
 
     char operation;
-    int address;
-    
-    std::ifstream infile;
-    infile.open("input.txt", std::ios::in);
+    unsigned long long address;
+    std::string myText;
+
+    std::ifstream infile("input.txt");
     std::cout << infile.is_open() << std::endl;
-    while (infile.is_open()) {
-        std::cin >> operation >> std::hex >> address;
-//        std::cout << "address = " << address << std::endl;
-        std::cout << "ridi" << std::endl;
+    while(!infile.eof()) {
+        infile >> operation >> std::hex >> address;
+        std::cout << operation << " " << address << std::endl;
     }
-
-
-    printf("ridi");
+    infile.close();
     
-//     Cache miss rate calculations
+    // Cache miss rate calculations
     unsigned long long r_miss, w_miss, n_read, n_write;
     r_miss = w_miss = n_read = n_write = 0;
 

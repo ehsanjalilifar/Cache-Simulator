@@ -9,7 +9,8 @@
 #include <iostream>
 #include <fstream>
 #include <math.h>
-// #include <fstream>
+#include <cstdlib>
+
 #define KB 1024
 
 class Cache {
@@ -27,7 +28,8 @@ class Cache {
         long long w_miss;
         long long r_count;
         long long w_count;
-        
+        int** lru; // An auxiliary 2D array for LRU implementation
+
         long long getTag(long long address) {
             // Shift the address to get the tag bits
             return (address >> (n_offset_bits + n_index_bits));
@@ -37,17 +39,37 @@ class Cache {
             return (address / blocksize) % n_sets;
         }
 
+        void updateLRU(long long set_idx, int block_idx) {
+            for(int i = 0; i < assoc; i++) {
+                i == block_idx ? lru[set_idx][i] = 0 : lru[set_idx][i]++;
+            }
+        }
+
         int evict(long long set_idx) {
-            return 0;
+            int block_idx = 0;
+            if(policy == 'l') { // LRU
+                int max = 0;
+                for(int i = 0; i < assoc; i++) {
+                    if(lru[set_idx][i] > max) {
+                        max = lru[set_idx][i];
+                        block_idx = i; 
+                    }
+                }
+            } else { // random
+                block_idx = std::rand() % assoc;
+            }
+            validBitMap[set_idx][block_idx] = false;
+            return block_idx;
         }
 
         void writeToCache(long long address) {
             long long set_idx = getIndex(address);
             long long tag = getTag(address);
-            for(int i = 0; i < assoc; i++) {
-                if(!validBitMap[set_idx][i]) { // write to the first empty block in the set
-                    validBitMap[set_idx][i] = true; // update the valid bit
-                    cacheMem[set_idx][i] = tag; // store the address in the cache
+            for(int block_idx = 0; block_idx < assoc; block_idx++) {
+                if(!validBitMap[set_idx][block_idx]) { // write to the first empty block in the set
+                    validBitMap[set_idx][block_idx] = true; // update the valid bit
+                    cacheMem[set_idx][block_idx] = tag; // store the address in the cache
+                    if(policy == 'l') updateLRU(set_idx, block_idx);
                     return;
                 }
             }
@@ -56,15 +78,21 @@ class Cache {
             int block_idx = evict(set_idx);
             cacheMem[set_idx][block_idx] = tag;
             validBitMap[set_idx][block_idx] = true; // It might not be necessary
+            if(policy == 'l') updateLRU(set_idx, block_idx);
             return;
         }
 
         bool isHit(long long address) {
             long long set_idx = getIndex(address);
             long long tag = getTag(address);
-            for(int i = 0; i < assoc; i++) {
-                if(validBitMap[set_idx][i] && tag == cacheMem[set_idx][i]) return true;
+            for(int block_idx = 0; block_idx < assoc; block_idx++) {
+                if(validBitMap[set_idx][block_idx] && tag == cacheMem[set_idx][block_idx]) {
+                    // Got a hit -> update the lru
+                    if(policy == 'l') updateLRU(set_idx, block_idx);
+                    return true;
+                }
             }
+            // It's a miss
             writeToCache(address);
             return false;
         }
@@ -84,11 +112,17 @@ class Cache {
             // Define a 2-D array to store the addresses in the cach
             this->cacheMem = new  long long*[this->n_sets];
             this->validBitMap = new bool*[this->n_sets]; // defines the valid bit
+            this->lru = new int*[this->n_sets];
             for (int i = 0; i < this->n_sets; i++) {
                 this->cacheMem[i] = new  long long[this->assoc];
                 this->validBitMap[i] = new bool[this->assoc];
+                this->lru[i] = new int[this->assoc];
             }
 
+        }
+
+        ~Cache() {
+            // Needs to be implemented
         }
 
         void isInCache(long long address, char type) {

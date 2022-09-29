@@ -155,16 +155,23 @@ int main(int argc, const char * argv[]) {
     char operation;
     long long address;
 
-    std::ifstream infile("401.bzip2-226B.trace.txt");
-    // std::ifstream infile("400.perlbench-41B.trace.txt");
+    // ### Read from inut file
+    // std::ifstream infile("401.bzip2-226B.trace.txt");
     
-    while(!infile.eof()) {
-        infile >> operation >> std::hex >> address;
+    // while(!infile.eof()) {
+    //     infile >> operation >> std::hex >> address;
+    //     // std::cout << operation << " " << address << std::endl;
+    //     cacheSim.isInCache(address, operation);
+    // }
+
+    // infile.close();
+
+    // Read from standard input
+    while(std::cin >> operation >> std::hex >> address) {
         // std::cout << operation << " " << address << std::endl;
         cacheSim.isInCache(address, operation);
     }
 
-    infile.close();
     cacheSim.printStatus();    
     return 0;
 }

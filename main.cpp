@@ -122,7 +122,14 @@ class Cache {
         }
 
         ~Cache() {
-            // Needs to be implemented
+            for(int i = 0; i < n_sets; i++)  {
+                delete[] cacheMem[i];
+                delete[] validBitMap[i];
+                delete[] lru[i];
+            }
+            delete[] cacheMem;
+            delete[] validBitMap;
+            delete[] lru;
         }
 
         void isInCache(long long address, char type) {

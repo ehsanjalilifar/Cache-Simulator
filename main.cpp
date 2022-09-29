@@ -37,12 +37,35 @@ class Cache {
             return (address / blocksize) % n_sets;
         }
 
+        int evict(long long set_idx) {
+            return 0;
+        }
+
+        void writeToCache(long long address) {
+            long long set_idx = getIndex(address);
+            long long tag = getTag(address);
+            for(int i = 0; i < assoc; i++) {
+                if(!validBitMap[set_idx][i]) { // write to the first empty block in the set
+                    validBitMap[set_idx][i] = true; // update the valid bit
+                    cacheMem[set_idx][i] = tag; // store the address in the cache
+                    return;
+                }
+            }
+            // All the blocks in the set are full
+            // One block needs to be evicted first
+            int block_idx = evict(set_idx);
+            cacheMem[set_idx][block_idx] = tag;
+            validBitMap[set_idx][block_idx] = true; // It might not be necessary
+            return;
+        }
+
         bool isHit(long long address) {
             long long set_idx = getIndex(address);
             long long tag = getTag(address);
             for(int i = 0; i < assoc; i++) {
                 if(validBitMap[set_idx][i] && tag == cacheMem[set_idx][i]) return true;
             }
+            writeToCache(address);
             return false;
         }
 
@@ -68,13 +91,21 @@ class Cache {
 
         }
 
-        void insert(long long address, char type) {
+        void isInCache(long long address, char type) {
             if(!isHit(address)) { // update the cache on a miss
                 type == 'r' ? r_miss++ : w_miss++;
             }
             type == 'r' ? r_count++ : w_count++;
         }
 
+        void printStatus() {
+            double miss_rate, r_miss_rate, w_miss_rate;
+            miss_rate = (double) (r_miss + w_miss) / (r_count + w_count); // total miss rate
+            r_miss_rate = (double) r_miss / r_count; // read miss rate
+            w_miss_rate = (double) w_miss / w_count; // write miss rate
+
+            std::cout << r_miss + w_miss << " " << miss_rate << " " << r_miss << " " << r_miss_rate << " " << w_miss << " " << w_miss_rate << std::endl;
+        }
         
 };
 
@@ -93,22 +124,11 @@ int main(int argc, const char * argv[]) {
     std::ifstream infile("input.txt");
     while(!infile.eof()) {
         infile >> operation >> std::hex >> address;
-        std::cout << operation << " " << address << std::endl;
+        // std::cout << operation << " " << address << std::endl;
+        cacheSim.isInCache(address, operation);
     }
+
     infile.close();
-    
-    // Cache miss rate calculations
-    long long r_miss, w_miss, n_read, n_write;
-    r_miss = w_miss = n_read = n_write = 0;
-
-    double miss_rate, r_miss_rate, w_miss_rate;
-    miss_rate = (double) (r_miss + w_miss) / (n_read + n_write); // total miss rate
-    r_miss_rate = (double) r_miss / n_read; // read miss rate
-    w_miss_rate = (double) w_miss / n_read; // write miss rate
-
-    std::cout << r_miss + w_miss << " " << miss_rate << " " << r_miss << " " << r_miss_rate << " " << w_miss << " " << w_miss_rate << std::endl;
-    
-//    std::cin >> type >> address;
-    
+    cacheSim.printStatus();    
     return 0;
 }

@@ -167,7 +167,6 @@ int main(int argc, const char * argv[]) {
     
     // while(!infile.eof()) {
     //     infile >> operation >> std::hex >> address;
-    //     // std::cout << operation << " " << address << std::endl;
     //     cacheSim.isInCache(address, operation);
     // }
 
@@ -175,7 +174,6 @@ int main(int argc, const char * argv[]) {
 
     // Read from standard input
     while(std::cin >> operation >> std::hex >> address) {
-        // std::cout << operation << " " << address << std::endl;
         cacheSim.isInCache(address, operation);
     }
 

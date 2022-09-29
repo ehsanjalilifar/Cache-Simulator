@@ -134,11 +134,11 @@ class Cache {
 
         void printStatus() {
             double miss_rate, r_miss_rate, w_miss_rate;
-            miss_rate = (double) (r_miss + w_miss) / (r_count + w_count); // total miss rate
-            r_miss_rate = (double) r_miss / r_count; // read miss rate
-            w_miss_rate = (double) w_miss / w_count; // write miss rate
+            miss_rate = (1.0 * (r_miss + w_miss)) / (r_count + w_count) * 100.0; // total miss rate
+            r_miss_rate = (1.0 * r_miss) / r_count * 100.0; // read miss rate
+            w_miss_rate = (1.0 * w_miss) / w_count * 100.0; // write miss rate
 
-            std::cout << r_miss + w_miss << " " << miss_rate << " " << r_miss << " " << r_miss_rate << " " << w_miss << " " << w_miss_rate << std::endl;
+            std::cout << r_miss + w_miss << " " << miss_rate << "% " << r_miss << " " << r_miss_rate << "% " << w_miss << " " << w_miss_rate << "%" << std::endl;
         }
         
 };
@@ -155,7 +155,9 @@ int main(int argc, const char * argv[]) {
     char operation;
     long long address;
 
-    std::ifstream infile("input.txt");
+    std::ifstream infile("401.bzip2-226B.trace.txt");
+    // std::ifstream infile("400.perlbench-41B.trace.txt");
+    
     while(!infile.eof()) {
         infile >> operation >> std::hex >> address;
         // std::cout << operation << " " << address << std::endl;
